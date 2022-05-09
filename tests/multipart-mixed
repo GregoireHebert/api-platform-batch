@@ -1,0 +1,10 @@
+--simpleboundary
+
+a bunch of text
+
+--simpleboundary
+Content-Type: text/plain
+
+another batch of text
+
+--simpleboundary--

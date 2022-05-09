@@ -1,0 +1,26 @@
+This is the preamble.  It is to be ignored, though it
+is a handy place to include an explanatory note to non-MIME compliant readers.
+--simpleboundary
+
+This is implicitly typed plain ASCII text.
+It does NOT end with a linebreak.
+--simpleboundary
+Content-Type: multipart/mixed;boundary="--simplesubboundary"
+
+This is the preamble.  It is to be ignored, though it
+is a handy place to include an explanatory note to non-MIME compliant readers.
+--simplesubboundary
+
+This is implicitly typed plain ASCII text.
+It does NOT end with a linebreak.
+--simplesubboundary
+Content-type: text/plain; charset=us-ascii
+
+This is explicitly typed plain ASCII text.
+It DOES end with a linebreak.
+
+--simplesubboundary--
+This is the epilogue. It is also to be ignored.
+
+--simpleboundary--
+This is the epilogue. It is also to be ignored.

@@ -1,0 +1,19 @@
+--simpleboundary
+
+a bunch of text
+
+--simpleboundary
+Content-Type: multipart/mixed;boundary="--simplesubboundary"
+
+--simplesubboundary
+
+a bunch of text
+
+--simplesubboundary
+Content-Type: text/plain
+
+another batch of text
+
+--simplesubboundary--
+
+--simpleboundary--

@@ -5,3 +5,8 @@ controllers:
 kernel:
     resource: ../src/Kernel.php
     type: annotation
+
+batch:
+    path: /api/batch
+    controller: ApiPlatform\Core\Action\PlaceholderAction
+    methods: POST
