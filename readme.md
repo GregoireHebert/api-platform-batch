@@ -551,4 +551,77 @@ Also there is https://github.com/Toflar/http-request-parser but this one is more
 
 I think the riverline one is nice and could be used, but I also know that in API Platform there is the will to reduce the amount of dependencies. This is something that could be part of HttpFoundation component.
 
-Anyway I'll implement mine for the time being.
+Anyway I'll implement mine for the time being. All the basic logic takes place within the OdataBatchProcessor.
+To keep this document simple I won't cover the implementation details.
+
+```PHP
+<?php
+
+declare(strict_types=1);
+
+namespace ApiPlatform\Odata\State;
+
+use ApiPlatform\Http\MediaTypeFactoryInterface;
+use ApiPlatform\Metadata\Operation;
+use ApiPlatform\Mime\Part\Multipart\BatchPart;
+use ApiPlatform\Mime\Part\Multipart\PartConverter;
+use ApiPlatform\Mime\Part\Multipart\PartsExtractor;
+use ApiPlatform\State\ProcessorInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\Mime\Part\Multipart\MixedPart;
+
+final class OdataBatchProcessor implements ProcessorInterface
+{
+    private PartConverter $partConverter;
+
+    public function __construct(private RequestStack $requestStack, private HttpKernelInterface $httpKernel, private MediaTypeFactoryInterface $mediaTypeFactory)
+    {
+        $this->partConverter = new PartConverter();
+    }
+
+    public function process($data, Operation $operation, array $uriVariables = [], array $context = [])
+    {
+        if (null === $currentRequest = $this->requestStack->getCurrentRequest()) {
+            throw new BadRequestHttpException('No request found to process.');
+        }
+
+        $batchParts = [];
+
+        // extract each part from the STDIN
+        foreach ((new PartsExtractor($this->mediaTypeFactory))->extract($currentRequest) as $subPart) {
+            $response = $this->httpKernel->handle(
+                // Convert each part into a subRequest and send it
+                $this->partConverter->toRequest($subPart, $currentRequest), HttpKernelInterface::SUB_REQUEST, false
+            );
+    
+            // Store the response in HTTP string format with a Batch Mime part.
+            $batchParts[] = new BatchPart((string) $response->prepare($currentRequest));
+        }
+
+        // Create a Mime MixedPart
+        $mixedPart = new MixedPart(...$batchParts);
+
+        // Prepare the Response 
+        $headers = [
+            'Content-Type' => sprintf('%s; charset=utf-8', $mixedPart->getPreparedHeaders()->get('Content-Type')->getBodyAsString()),
+            'Vary' => 'Accept',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'deny',
+        ];
+
+        // Send it :)
+        return new Response(
+            $mixedPart->bodyToString(),
+            $operation->getStatus(),
+            $headers
+        );
+    }
+}
+
+```
+
+We have the foundations.
+Let's implement the Odata specifications now.
