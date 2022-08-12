@@ -625,3 +625,35 @@ final class OdataBatchProcessor implements ProcessorInterface
 
 We have the foundations.
 Let's implement the Odata specifications now.
+
+## Odata specifications
+
+>Batch requests allow grouping multiple individual requests into a single HTTP request payload. An individual request in the context of a batch request is a Metadata Request, Data Request, Data Modification Request, Action invocation request, or Function invocation request.
+>
+>Batch requests are submitted as a single HTTP POST request to the batch endpoint of a service, located at the URL $batch relative to the service root.
+>
+>Individual requests within a batch request are evaluated according to the same semantics used when the request appears outside the context of a batch request.
+>
+>A batch request is represented using either the multipart batch format defined in this document or the JSON batch format defined in [OData-JSON](http://docs.oasis-open.org/odata/odata-json-format/v4.01/odata-json-format-v4.01.html#sec_BatchRequest).
+
+I'll use the classic HTTP representation, but allowing the json format could definitely be a must-have!
+
+### Batch Request Headers
+
+> A batch request using the multipart batch format **MUST** contain a Content-Type header specifying a content type of multipart/mixed and a boundary parameter as defined in [RFC 2046](http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#RFC2046).
+
+Done.
+
+> Batch requests **SHOULD** contain the applicable OData-Version header.
+
+At the moment we only support the version 4.*, I won't bother handling multiple versions yet.
+
+> Batch requests **SHOULD** contain an Accept header specifying the desired batch response format, either multipart/mixed or application/json. If no Accept header is provided, services **SHOULD** respond with the content type of the request.
+
+First, I went to support the multipart/mixed content-type with a boundary parameter within a standard HTTP Request. Using the JSON format, is possible too, and might be the one perduring. I'll implement it as well later.
+
+> If the set of request headers of a batch request are valid the service MUST return a 200 OK HTTP response code to indicate that the batch request was accepted for processing, but the processing is yet to be completed. The individual requests within the body of the batch request may subsequently fail or be malformed; however, this enables batch implementations to stream the results.
+
+> If the service receives a batch request with an invalid set of headers it MUST return a 4xx response code and perform no further processing of the batch request.
+
+Nothing too fancy, Symfony `HttpFoundation` component has a `StreamedResponse` class.
