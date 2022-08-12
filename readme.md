@@ -77,10 +77,81 @@ class Greetings
 
 ![](doc/assets/odata-greetings-swagger.png)
 
-Lets begin with a simple / not so simple batch request.
-In a single batch, we are going to ask for a collection, which should be empty.
-Then include a second batch in which we insert a new Greeting resource, and asl for the collection again, that should 
-contains our newly created resource.
+### Usage
+
+Lets begin with a simple batch request.
+We are going to POST a resource first, then GET a collection that will contain our new resource.
+
+```HTTP
+POST /api/$batch HTTP/1.1
+Host: localhost:8000
+Accept: multipart/mixed
+Content-Type: multipart/mixed;boundary=abc
+Content-Length: 408
+
+This is the preamble.  It is to be ignored, though it
+is a handy place to include an explanatory note to non-MIME compliant readers.
+
+--abc
+POST /api/greetings HTTP/1.1
+Host: localhost:8000
+Accept: application/ld+json
+Content-Type: application/ld+json
+
+{
+	"name": "Greg"
+}
+
+--abc
+GET /api/greetings HTTP/1.1
+Host: localhost:8000
+Accept: application/ld+json
+
+--abc--
+This is the epilogue. It is to be ignored.
+```
+
+Results in:
+
+```HTTP
+--4bfbXFk6
+HTTP/1.1 201 Created
+Accept-Patch:           application/merge-patch+json
+Cache-Control:          no-cache, private
+Content-Location:       /api/greetings/1
+Content-Type:           application/ld+json; charset=utf-8
+Date:                   Fri, 12 Aug 2022 14:28:48 GMT
+Location:               /api/greetings/1
+Set-Cookie:             sf_redirect=%7B%22token%22%3A%228018d1%22%2C%22route%22%3A%22_api_%5C%2Fgreetings.%7B_format%7D_post%22%2C%22method%22%3A%22POST%22%2C%22controller%22%3A%22api_platform.action.placeholder%22%2C%22status_code%22%3A201%2C%22status_text%22%3A%22Created%22%7D; path=/; secure; httponly; samesite=lax
+Vary:                   Accept
+X-Content-Type-Options: nosniff
+X-Debug-Token:          8018d1
+X-Debug-Token-Link:     https://localhost:8000/_profiler/8018d1
+X-Frame-Options:        deny
+X-Robots-Tag:           noindex
+
+{"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings\/1","@type":"Greetings","id":1,"name":"Greg"}
+--4bfbXFk6
+HTTP/1.1 200 OK
+Cache-Control:          no-cache, private
+Content-Type:           application/ld+json; charset=utf-8
+Date:                   Fri, 12 Aug 2022 14:28:48 GMT
+Etag:                   "5919f19cfb4c284d1e7f580cf8b40e19"
+Vary:                   Accept
+X-Content-Type-Options: nosniff
+X-Debug-Token:          5a21d0
+X-Debug-Token-Link:     https://localhost:8000/_profiler/5a21d0
+X-Frame-Options:        deny
+X-Robots-Tag:           noindex
+
+{"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings","@type":"hydra:Collection","hydra:member":[{"@id":"\/api\/greetings\/1","@type":"Greetings","id":1,"name":"Greg"}],"hydra:totalItems":1}
+--4bfbXFk6--
+
+```
+
+We can also include a batch request within our batch request.
+We are going to GET a collection, which should be empty.
+Then include a second batch in which we POST a new Greeting resource, and GET the collection again, that should contain our newly created resource.
 
 ```HTTP
 POST /api/$batch HTTP/1.1
@@ -129,66 +200,66 @@ Use your favourite HTTP client to execute this request :)
 and : 
 
 ```HTTP
---3VAWXC23
+--ZGKCh9VP
 HTTP/1.1 200 OK
 Cache-Control:          no-cache, private
 Content-Type:           application/ld+json; charset=utf-8
-Date:                   Thu, 11 Aug 2022 12:26:33 GMT
+Date:                   Fri, 12 Aug 2022 14:31:53 GMT
+Etag:                   "046963b4043b6b10270bb3c31c9902b1"
+Vary:                   Accept
+X-Content-Type-Options: nosniff
+X-Debug-Token:          78be2c
+X-Debug-Token-Link:     https://localhost:8000/_profiler/78be2c
+X-Frame-Options:        deny
+X-Robots-Tag:           noindex
+
+{"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings","@type":"hydra:Collection","hydra:member":[],"hydra:totalItems":0}
+--ZGKCh9VP
+HTTP/1.1 200 OK
+Cache-Control:          no-cache, private
+Content-Type:           multipart/mixed; boundary=Y4M6WP27; charset=utf-8
+Date:                   Fri, 12 Aug 2022 14:31:53 GMT
+Vary:                   Accept
+X-Content-Type-Options: nosniff
+X-Debug-Token:          24f3a9
+X-Debug-Token-Link:     https://localhost:8000/_profiler/24f3a9
+X-Frame-Options:        deny
+X-Robots-Tag:           noindex
+
+--Y4M6WP27
+HTTP/1.1 201 Created
+Accept-Patch:           application/merge-patch+json
+Cache-Control:          no-cache, private
+Content-Location:       /api/greetings/1
+Content-Type:           application/ld+json; charset=utf-8
+Date:                   Fri, 12 Aug 2022 14:31:53 GMT
+Location:               /api/greetings/1
+Set-Cookie:             sf_redirect=%7B%22token%22%3A%2260d841%22%2C%22route%22%3A%22_api_%5C%2Fgreetings.%7B_format%7D_post%22%2C%22method%22%3A%22POST%22%2C%22controller%22%3A%22api_platform.action.placeholder%22%2C%22status_code%22%3A201%2C%22status_text%22%3A%22Created%22%7D; path=/; secure; httponly; samesite=lax
+Vary:                   Accept
+X-Content-Type-Options: nosniff
+X-Debug-Token:          60d841
+X-Debug-Token-Link:     https://localhost:8000/_profiler/60d841
+X-Frame-Options:        deny
+X-Robots-Tag:           noindex
+
+{"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings\/1","@type":"Greetings","id":1,"name":"Greg"}
+--Y4M6WP27
+HTTP/1.1 200 OK
+Cache-Control:          no-cache, private
+Content-Type:           application/ld+json; charset=utf-8
+Date:                   Fri, 12 Aug 2022 14:31:53 GMT
 Etag:                   "5919f19cfb4c284d1e7f580cf8b40e19"
 Vary:                   Accept
 X-Content-Type-Options: nosniff
-X-Debug-Token:          fdae1a
-X-Debug-Token-Link:     https://localhost:8000/_profiler/fdae1a
+X-Debug-Token:          d6bb73
+X-Debug-Token-Link:     https://localhost:8000/_profiler/d6bb73
 X-Frame-Options:        deny
 X-Robots-Tag:           noindex
 
 {"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings","@type":"hydra:Collection","hydra:member":[{"@id":"\/api\/greetings\/1","@type":"Greetings","id":1,"name":"Greg"}],"hydra:totalItems":1}
---3VAWXC23
-HTTP/1.1 200 OK
-Cache-Control:          no-cache, private
-Content-Type:           multipart/mixed; boundary=A7SZAzLe
-Date:                   Thu, 11 Aug 2022 12:26:33 GMT
-Vary:                   Accept
-X-Content-Type-Options: nosniff
-X-Debug-Token:          4ce9da
-X-Debug-Token-Link:     https://localhost:8000/_profiler/4ce9da
-X-Frame-Options:        deny
-X-Robots-Tag:           noindex
+--Y4M6WP27--
 
---A7SZAzLe
-HTTP/1.1 201 Created
-Accept-Patch:           application/merge-patch+json
-Cache-Control:          no-cache, private
-Content-Location:       /api/greetings/2
-Content-Type:           application/ld+json; charset=utf-8
-Date:                   Thu, 11 Aug 2022 12:26:33 GMT
-Location:               /api/greetings/2
-Set-Cookie:             sf_redirect=%7B%22token%22%3A%22415156%22%2C%22route%22%3A%22_api_%5C%2Fgreetings.%7B_format%7D_post%22%2C%22method%22%3A%22POST%22%2C%22controller%22%3A%22api_platform.action.placeholder%22%2C%22status_code%22%3A201%2C%22status_text%22%3A%22Created%22%7D; path=/; secure; httponly; samesite=lax
-Vary:                   Accept
-X-Content-Type-Options: nosniff
-X-Debug-Token:          415156
-X-Debug-Token-Link:     https://localhost:8000/_profiler/415156
-X-Frame-Options:        deny
-X-Robots-Tag:           noindex
-
-{"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings\/2","@type":"Greetings","id":2,"name":"Greg"}
---A7SZAzLe
-HTTP/1.1 200 OK
-Cache-Control:          no-cache, private
-Content-Type:           application/ld+json; charset=utf-8
-Date:                   Thu, 11 Aug 2022 12:26:33 GMT
-Etag:                   "ce7574602c44fea0ece312c152767991"
-Vary:                   Accept
-X-Content-Type-Options: nosniff
-X-Debug-Token:          4a031d
-X-Debug-Token-Link:     https://localhost:8000/_profiler/4a031d
-X-Frame-Options:        deny
-X-Robots-Tag:           noindex
-
-{"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings","@type":"hydra:Collection","hydra:member":[{"@id":"\/api\/greetings\/1","@type":"Greetings","id":1,"name":"Greg"},{"@id":"\/api\/greetings\/2","@type":"Greetings","id":2,"name":"Greg"}],"hydra:totalItems":2}
---A7SZAzLe--
-
---3VAWXC23--
+--ZGKCh9VP--
 
 ```
 
@@ -197,8 +268,85 @@ You would have then noticed the followings:
 - Supports layered batch requests
 - Each sub operation has its own Request within the stack
 - Each Request then have its own profiler
-- Everything is observable from the main batch request
 - Its build of the very same foundation of any operation so it could use any operation option available to some extent
+
+### Advanced usage
+
+#### Referencing new entities
+
+Each individual request within a batch request MAY have a request identifier assigned in a `Content-ID` header. The request identifier is case-sensitive, MUST be unique within the batch request, and be a positive integer.
+
+Entities created by a POST request can be referenced in the request URL of subsequent requests by using the request identifier prefixed with a $ character as the first segment of the request URL.
+
+```HTTP
+POST /api/$batch HTTP/1.1
+Host: localhost:8000
+Accept: multipart/mixed
+Content-Type: multipart/mixed;boundary=abc
+Content-Length: 424
+
+--abc
+POST /api/greetings HTTP/1.1
+Host: localhost:8000
+Accept: application/ld+json
+Content-Type: application/ld+json
+Content-ID: 1
+
+{
+	"name": "Greg"
+}
+
+--abc
+GET $1 HTTP/1.1
+Host: localhost:8000
+Accept: application/ld+json
+Content-ID: 2
+
+--abc--
+```
+
+results in:
+
+```HTTP
+--eiF6qLTH
+HTTP/1.1 201 Created
+Accept-Patch:           application/merge-patch+json
+Cache-Control:          no-cache, private
+Content-Location:       /api/greetings/1
+Content-Type:           application/ld+json; charset=utf-8
+Date:                   Fri, 12 Aug 2022 15:03:43 GMT
+Location:               /api/greetings/1
+Set-Cookie:             sf_redirect=%7B%22token%22%3A%2299b9a6%22%2C%22route%22%3A%22_api_%5C%2Fgreetings.%7B_format%7D_post%22%2C%22method%22%3A%22POST%22%2C%22controller%22%3A%22api_platform.action.placeholder%22%2C%22status_code%22%3A201%2C%22status_text%22%3A%22Created%22%7D; path=/; secure; httponly; samesite=lax
+Vary:                   Accept
+X-Content-Type-Options: nosniff
+X-Debug-Token:          99b9a6
+X-Debug-Token-Link:     https://localhost:8000/_profiler/99b9a6
+X-Frame-Options:        deny
+X-Robots-Tag:           noindex
+
+{"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings\/1","@type":"Greetings","id":1,"name":"Greg"}
+--eiF6qLTH
+HTTP/1.1 200 OK
+Accept-Patch:           application/merge-patch+json
+Cache-Control:          no-cache, private
+Content-Type:           application/ld+json; charset=utf-8
+Date:                   Fri, 12 Aug 2022 15:03:43 GMT
+Etag:                   "4018df5413cc1ea7c3ba50fbaf09beb5"
+Vary:                   Accept
+X-Content-Type-Options: nosniff
+X-Debug-Token:          af5af1
+X-Debug-Token-Link:     https://localhost:8000/_profiler/af5af1
+X-Frame-Options:        deny
+X-Robots-Tag:           noindex
+
+{"@context":"\/api\/contexts\/Greetings","@id":"\/api\/greetings\/1","@type":"Greetings","id":1,"name":"Greg"}
+--eiF6qLTH--
+
+```
+
+---
+
+Happy Request batching to you !
 
 Now, for the most curious of you, how does this work?
 This is where our journey begins.
@@ -657,3 +805,19 @@ First, I went to support the multipart/mixed content-type with a boundary parame
 > If the service receives a batch request with an invalid set of headers it MUST return a 4xx response code and perform no further processing of the batch request.
 
 Nothing too fancy, Symfony `HttpFoundation` component has a `StreamedResponse` class.
+
+### Referencing New Entities
+
+> Entities created by an Insert request can be referenced in the request URL of subsequent requests within the same change set.
+
+Api Platform Sets a `_api_write_item_iri` attribute in the request after processing a write operation. This will be used for further reference.
+
+### Batch Request Body
+
+>The body of a multipart batch request is made up of a series of individual requests and change sets, each represented as a distinct body part (i.e. preceded by a boundary delimiter line consisting of two dashes and the value of the boundary parameter specified in the Content-Type header, and the last body part followed by a closing boundary delimiter line consisting of two dashes, the boundary, and another two dashes).
+>
+>A body part representing an individual request MUST include a Content-Type header with value application/http.
+>
+>The contents of a body part representing a change set MUST itself be a multipart document (see [RFC2046]) with one body part for each operation in the change set. Each body part representing an operation in the change set MUST specify a Content-ID header with a request identifier that is unique within the batch request.
+
+// TODO
