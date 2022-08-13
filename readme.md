@@ -272,6 +272,36 @@ You would have then noticed the followings:
 
 ### Advanced usage
 
+#### Continue on error
+
+By default, If one of the sub request fails, it would negate the all batch change set.
+But by Specifying a `Prefer` header with the token `continue-on-error`, then it will go through every sub request 
+regardless of the previous success or failures.
+
+```HTTP
+POST /api/$batch HTTP/1.1
+Host: localhost:8000
+Content-Type: multipart/mixed;boundary=abc
+Accept: multipart/mixed
+Prefer: continue-on-error
+Content-Length: 345
+
+This request will fail but the next one will be applied
+--abc
+GET /api/fails HTTP/1.1
+Host: localhost:8000
+Accept: application/ld+json
+
+--abc
+GET /api/greetings HTTP/1.1
+Host: localhost:8000
+Accept: application/ld+json
+
+--abc--
+This is the epilogue. It is also to be ignored.
+
+```
+
 #### Referencing new entities
 
 Each individual request within a batch request MAY have a request identifier assigned in a `Content-ID` header. The request identifier is case-sensitive, MUST be unique within the batch request, and be a positive integer.
