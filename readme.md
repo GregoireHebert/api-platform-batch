@@ -111,6 +111,41 @@ Accept: application/ld+json
 This is the epilogue. It is to be ignored.
 ```
 
+or in JSON
+
+```json
+POST /api/$batch HTTP/1.1
+Host: localhost:8000
+Content-Type: application/json
+Accept: multipart/mixed
+Prefer: odata.continue-on-error
+Content-Length: 425
+
+{
+"requests": [
+    {
+      "id": "1",
+      "method": "POST",
+      "url": "/api/greetings",
+      "headers": {
+        "Accept": "application/ld+json",
+        "Content-Type": "application/json"
+      },
+      "body": {"name": "greg"}
+    },
+    {
+      "id": "2",
+      "depends": ["1"],
+      "method": "GET",
+      "url": "/api/greetings",
+      "headers": {
+        "Accept": "application/ld+json"
+      }
+    }
+  ]
+}
+```
+
 Results in:
 
 ```HTTP
@@ -149,7 +184,72 @@ X-Robots-Tag:           noindex
 
 ```
 
-We can also include a batch request within our batch request.
+and 
+
+```json
+{
+  "responses": [
+    {
+      "id": "1",
+      "status": 201,
+      "headers": {
+        "content-type": "application/ld+json; charset=utf-8",
+        "vary": "Accept",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "deny",
+        "accept-patch": "application/merge-patch+json",
+        "content-location": "/api/greetings/1",
+        "location": "/api/greetings/1",
+        "cache-control": "no-cache, private",
+        "date": "Tue, 30 Aug 2022 20:17:41 GMT",
+        "x-debug-token": "3e22b2",
+        "x-debug-token-link": "https://localhost:8000/_profiler/3e22b2",
+        "x-robots-tag": "noindex",
+        "set-cookie": "sf_redirect=%7B%22token%22%3A%223e22b2%22%2C%22route%22%3A%22_api_%5C%2Fgreetings.%7B_format%7D_post%22%2C%22method%22%3A%22POST%22%2C%22controller%22%3A%22api_platform.action.placeholder%22%2C%22status_code%22%3A201%2C%22status_text%22%3A%22Created%22%7D; path=/; secure; httponly; samesite=lax"
+      },
+      "body": {
+        "@context": "/api/contexts/Greetings",
+        "@id": "/api/greetings/1",
+        "@type": "Greetings",
+        "id": 1,
+        "name": "greg"
+      }
+    },
+    {
+      "id": "2",
+      "status": 200,
+      "headers": {
+        "content-type": "application/ld+json; charset=utf-8",
+        "vary": "Accept",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "deny",
+        "cache-control": "no-cache, private",
+        "date": "Tue, 30 Aug 2022 20:17:41 GMT",
+        "etag": "\"557cb21b35d22023a53f3e695449812a\"",
+        "x-debug-token": "dda992",
+        "x-debug-token-link": "https://localhost:8000/_profiler/dda992",
+        "x-robots-tag": "noindex"
+      },
+      "body": {
+        "@context": "/api/contexts/Greetings",
+        "@id": "/api/greetings",
+        "@type": "hydra:Collection",
+        "hydra:member": [
+          {
+            "@id": "/api/greetings/1",
+            "@type": "Greetings",
+            "id": 1,
+            "name": "greg"
+          }
+        ],
+        "hydra:totalItems": 1
+      }
+    }
+  ]
+}
+```
+
+In the HTTP format, we can also include a batch request within our batch request.
 We are going to GET a collection, which should be empty.
 Then include a second batch in which we POST a new Greeting resource, and GET the collection again, that should contain our newly created resource.
 
@@ -265,10 +365,10 @@ X-Robots-Tag:           noindex
 
 You would have then noticed the followings:
 
-- Supports layered batch requests
+- Supports layered batch requests (HTTP format only)
 - Each sub operation has its own Request within the stack
 - Each Request then have its own profiler
-- Its build of the very same foundation of any operation so it could use any operation option available to some extent
+- It uses an API Platform Post Operation, so it could use any operation option available to some extent.
 
 ### Advanced usage
 
@@ -373,6 +473,45 @@ X-Robots-Tag:           noindex
 --eiF6qLTH--
 
 ```
+
+In the JSON format, a dependency condition on preceding requests can be set.  
+If one or more of the previous individual requests are invalid, the current individual request is not processed, and a 424 (invalid dependency) status code is returned.
+Unless you set the continue-on-error preference.
+
+```json
+POST /api/$batch HTTP/1.1
+Host: localhost:8000
+Content-Type: application/json
+Accept: multipart/mixed
+Content-Length: 413
+
+{
+  "requests": [
+    {
+      "id": "3",
+      "method": "POST",
+      "url": "/api/greetings",
+      "headers": {
+        "Accept": "application/ld+json",
+        "Content-Type": "application/json"
+      },
+      "body": {"name": "greg"}
+    },
+    {
+      "id": "2",
+      "dependsOn": ["1"],
+      "method": "GET",
+      "url": "$1",
+      "headers": {
+        "Accept": "application/ld+json"
+      }
+    }
+  ]
+}
+```
+
+Here, the second request has been set as depending on the request "1".
+But we've marked the first as "3". The request will fail.
 
 ---
 
@@ -834,13 +973,14 @@ First, I went to support the multipart/mixed content-type with a boundary parame
 
 > If the service receives a batch request with an invalid set of headers it MUST return a 4xx response code and perform no further processing of the batch request.
 
-Nothing too fancy, Symfony `HttpFoundation` component has a `StreamedResponse` class.
+Symfony `HttpFoundation` component has a `StreamedResponse` class.
 
 ### Referencing New Entities
 
 > Entities created by an Insert request can be referenced in the request URL of subsequent requests within the same change set.
 
-Api Platform Sets a `_api_write_item_iri` attribute in the request after processing a write operation. This will be used for further reference.
+API Platform Sets a `_api_write_item_iri` attribute in the request after processing a write operation. This will be used for further reference.
+Therefore, we need to use an RDF format to ensure the reference capabilities.
 
 ### Batch Request Body
 
